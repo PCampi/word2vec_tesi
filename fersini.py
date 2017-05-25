@@ -22,7 +22,7 @@ coll = {e: prova.get_most_similar(e,
 
 # Now load emolex and lemmatizer
 lemmatizer = WordNetLemmatizer()
-lemmas = {e: [(postproc.lemmatize(word, lemmatizer), score)
+lemmas = {e: [(postproc.smart_lemmatize(word, lemmatizer), score)
               for word, score in coll[e]]
           for e in coll}
 
