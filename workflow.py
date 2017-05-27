@@ -1,12 +1,33 @@
 from gensim.models import KeyedVectors
-from nltk.stem import WordNetLemmatizer
+import pudb
 
 import emolex_persistence
+import lemmatization
+import persistence
 import postproc
-import prova
+import similarity
 
 
-def filter_not_in_emolex(lem_dict):
+def compute_most_similar(words, model, number=50):
+    """Compute the N most similar words."""
+    model = KeyedVectors.load("model_stripped")
+    it_limit = 20
+
+    result = {
+        w: similarity.get_most_similar(w, model, how_many=number,
+                                       max_iter=it_limit)
+        for w in words}
+
+    return result
+
+
+def compute_lemmas(tpl_arr, lemmatizer):
+    """Compute the lemmas of the words using the provided lemmatizer."""
+    return [(lemmatizer.smart_lemmatize(word), score)
+            for word, score in tpl_arr]
+
+
+def filter_not_in_emolex(lem_dict, emolex_dict):
     """For every array of tuples, leave only the missing EmoLex entries.
 
     Parameters
@@ -19,35 +40,41 @@ def filter_not_in_emolex(lem_dict):
     not_in_emolex: dictionary
         contains {emotion: [word_not_in_emolex, ...], ...}
     """
+    pudb.set_trace()
+
     not_in_emolex = {emotion: [tpl for tpl in
                                filter(
-                                   (lambda tpl: tpl[0].lower() not in emolex),
-                                   emolex[emotion])]
+                                   (lambda tpl:
+                                    tpl[0].lower() not in emolex_dict),
+                                   lem_dict[emotion])]
                      for emotion in lem_dict}
 
     return not_in_emolex
 
 
-if __name__ == "__main__":
+def _setup():
+    """Convenience testing function."""
     model_file = "model_stripped"
     model = KeyedVectors.load(model_file)
 
     emotions = ["anger", "anticipation", "disgust", "fear", "joy",
                 "sadness", "surprise", "trust"]
     top = 50
-    it_limit = 20
-    coll = {
-        e: prova.get_most_similar(e, model, how_many=top, max_iter=it_limit)
-        for e in emotions}
+    coll = compute_most_similar(emotions, model, number=top)
+    return coll
 
-    lemmatizer = WordNetLemmatizer()
-    lemmas = {e: [(postproc.smart_lemmatize(word, lemmatizer), score)
-                  for word, score in coll[e]] for e in coll}
 
-    lemmas_filtered = {e: postproc.filter_duplicates(lemmas[e])
-                       for e in lemmas}
+if __name__ == "__main__":
+    coll = _setup()
+
+    lemmatizer = lemmatization.MyLemmatizer()
+    lemmas = {e: compute_lemmas(coll[e], lemmatizer) for e in coll}
+
+    lemmas_no_duplicates = {e: postproc.filter_duplicates(lemmas[e])
+                            for e in lemmas}
 
     emolex = emolex_persistence.load_emolex("data/EmoLex_en.pickle")
-    not_in_emolex = filter_not_in_emolex(lemmas_filtered)
+    not_in_emolex = filter_not_in_emolex(lemmas_no_duplicates, emolex)
 
-    postproc.save_results("not_in_emolex.pickle")
+    persistence.save_results(not_in_emolex, "not_in_emolex.pickle")
+    persistence.save_results(not_in_emolex, "not_in_emolex.csv")

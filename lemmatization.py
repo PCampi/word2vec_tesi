@@ -9,22 +9,22 @@ class MyLemmatizer(WordNetLemmatizer):
 
     def smart_lemmatize(self, word):
         """Lemmatize a word."""
-        lemma = super.lemmatize(word)
+        lemma = self.lemmatize(word)
         if lemma != word:
             return lemma
 
         # altrimenti prova con verbi, aggettivi
         else:
             # prova col verbo
-            verb = super.lemmatize(word, pos='v')
+            verb = self.lemmatize(word, pos='v')
             if verb != word:
                 return verb
 
-            adj = super.lemmatize(word, pos='a')
+            adj = self.lemmatize(word, pos='a')
             if adj != word:
                 return adj
 
-            adv = super.lemmatize(word, pos='r')
+            adv = self.lemmatize(word, pos='r')
             if adv != word:
                 return adv
 
