@@ -12,6 +12,16 @@ def dict_to_triplets(d):
     return result
 
 
+def quad(k, tpl):
+    w, s, f = tpl
+    return k, w, s, f
+
+
+def dict_to_quads(d):
+    result = [quad(k, tpl) for k in d for tpl in d[k]]
+    return result
+
+
 def save_csv(set_of_triplets, file_name):
     """Save the set of triplets to a csv file."""
     with open(file_name, "w") as f:

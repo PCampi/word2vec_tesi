@@ -40,7 +40,7 @@ def filter_not_in_emolex(lem_dict, emolex_dict):
     not_in_emolex: dictionary
         contains {emotion: [word_not_in_emolex, ...], ...}
     """
-    pudb.set_trace()
+    # pudb.set_trace()
 
     not_in_emolex = {emotion: [tpl for tpl in
                                filter(
@@ -52,8 +52,14 @@ def filter_not_in_emolex(lem_dict, emolex_dict):
     return not_in_emolex
 
 
+def annotate(lem_dict, emolex_dict):
+    annotated = {e: [(w, s, w in emolex_dict) for w, s in lem_dict[e]]
+                 for e in lem_dict}
+    return annotated
+
+
 def _setup():
-    """Convenience testing function."""
+    """Convenience initialization function."""
     model_file = "model_stripped"
     model = KeyedVectors.load(model_file)
 
