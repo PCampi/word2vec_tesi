@@ -1,31 +1,27 @@
-from nltk.stem import WordNetLemmatizer
+"""Lemmatization module."""
+
+import treetaggerwrapper as ttw
 
 
-class MyLemmatizer(WordNetLemmatizer):
-    """Class extending WordNetLemmatizer with smart lemmatization."""
+class Lemmatizer():
+    """Sentence lemmatizer."""
 
-    def __init__(self):
-        super()
+    def __init__(self, tagger):
+        self.tagger = tagger
 
-    def smart_lemmatize(self, word):
-        """Lemmatize a word."""
-        lemma = self.lemmatize(word)
-        if lemma != word:
-            return lemma
+    def lemmatize(self, sentence):
+        """Lemmatize a sentence using TreeTagger.
 
-        # altrimenti prova con verbi, aggettivi
-        else:
-            # prova col verbo
-            verb = self.lemmatize(word, pos='v')
-            if verb != word:
-                return verb
+        Parameters
+        ----------
+        sentence: list of strings
+            a sentence as a list of strings, each of which is a word
 
-            adj = self.lemmatize(word, pos='a')
-            if adj != word:
-                return adj
-
-            adv = self.lemmatize(word, pos='r')
-            if adv != word:
-                return adv
-
-            return word
+        Returns
+        -------
+        lemmas: list
+            a list with the same length as sentence, with each word substituted
+            by its lemma
+        """
+        raw_tags = self.tagger.tag_text(sentence, tagonly=True)
+        return [tag.lemma for tag in ttw.make_tags(raw_tags)]
