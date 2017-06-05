@@ -1,6 +1,6 @@
 """Generic text preprocessing."""
+
 import re
-from itertools import chain
 from nltk.corpus import stopwords
 import treetaggerwrapper as ttw
 
@@ -23,13 +23,16 @@ tagger = ttw.TreeTagger(TAGLANG=language.lower()[0:2],
 lemmatizer = lemmatization.Lemmatizer(tagger)
 
 
-def prepare_for_w2v(text):
+def prepare_for_w2v(text, keep_stopwords=False, lemmatize=True):
     """Prepare a text for word2vec.
 
     Parameters
     ----------
     text: str
         the whole text as a single string
+
+    keep_stopwords: Bool
+        keep or remove stopwords
 
     Returns
     -------
@@ -39,32 +42,50 @@ def prepare_for_w2v(text):
     # 1. preprocess removing punctuation and other unnecessary glyphs
     preprocessed_text = preprocess(text)
 
-    # 2. split the sentences
+    # 2. split the sentences -> gen(List[List[str]])
     sentences = (splitter.sentence_to_words(s)
                  for s in splitter.text_to_sentences(preprocessed_text))
 
-    # 3. lemmatize sentences
-    lemmatized = (lemmatizer.lemmatize(s) for s in sentences)
+    # 3. lemmatize sentences -> gen(List[List[str]])
+    if lemmatize:
+        lemmatized = (lemmatizer.lemmatize(s) for s in sentences)
+        to_filter_punct = lemmatized
+    else:
+        to_filter_punct = sentences
 
-    # 4. flatten in a single list
-    all_words = chain.from_iterable(lemmatized)
+    # 4. filter out single punctuation characters from lemmatized
+    # -> gen(gen(List[str]))
+    punct = {',', '.', ';', ':', '?', '!', '|', '-', '--'}
+    if keep_stopwords:
+        def fun(w):
+            return w not in punct
+    else:
+        def fun(w):
+            return w not in punct and len(w) > 1
 
-    # 5. filter out single punctuation characters from all_words
-    punct = {',', '.', ';', ':', '?', '!'}
-    only_words = filter((lambda w: w not in punct and len(w) > 1),
-                        all_words)
+    only_words = (filter(fun, s) for s in to_filter_punct)
 
-    # 6. remove apostrophes and dots from remaining words
+    # 5. remove apostrophes and dots from remaining words
+    # gen(gen(List[str])) -> gen(gen(List[str]))
+
     def strip_dot_apostrophe(word):
         """Delete dots and apostrophes from a str."""
         return punctuation_to_space(apostrophe_no_space(word))
 
-    stop_words = get_stopwords()
-    meaningful_words = filter((lambda w: w not in stop_words),
-                              map(strip_dot_apostrophe, only_words))
+    cleaned_words = ((strip_dot_apostrophe(w) for w in s)
+                     for s in only_words)
 
-    # 7. join into a single str and return
-    cleaned_text = " ".join(meaningful_words)
+    # 6. convert to list
+    # gen(gen(List[str])) -> List[List[str]]
+    if keep_stopwords:
+        cleaned_text = list(map(list, cleaned_words))
+    else:
+        stopwords = get_stopwords()
+        gen_no_stopwords = (filter((lambda w: w not in stopwords), s)
+                            for s in cleaned_words)
+        cleaned_text = list(map(list, gen_no_stopwords))
+
+    # 7. return the List[List[str]] of cleaned_text
     return cleaned_text
 
 
@@ -152,6 +173,7 @@ def whitespace(text):
 def apostrophe(text):
     """Substitute apostrophe with space."""
     return re.sub(r'[\u0027\u2019\u02bc]+', r' ', text)
+
 
 def apostrophe_no_space(text):
     """Substitute apostrophe with space."""
