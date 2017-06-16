@@ -63,10 +63,10 @@ def train_model(sentences: List[List[str]], num_features=300,
     return model
 
 
-def complete_workflow(save=True):
+def complete_workflow(save=True, keep_stopwords=True, lemmatize=False):
     """A convenience function to run all the workflow."""
     filepath = "train_data/Stephen Chbosky - Ragazzo da parete.txt"
-    sentences = preprocess_file(filepath, keep_stopwords=True, lemmatize=False)
+    sentences = preprocess_file(filepath, keep_stopwords, lemmatize)
 
     features = 300
     word_count = 10
@@ -83,6 +83,13 @@ def complete_workflow(save=True):
     if save:
         model_name = "{}feat_{}minwords_{}context".\
                      format(features, word_count, context)
+        if lemmatize:
+            model_name = model_name + "_lemmatized"
+        if keep_stopwords:
+            model_name = model_name + "_with_stopwords"
+        else:
+            model_name = model_name + "_no_stopwords"
+
         model.save(model_name)
         print("Model saved! Workflow completed.")
     else:
