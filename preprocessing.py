@@ -23,13 +23,16 @@ tagger = ttw.TreeTagger(TAGLANG=language.lower()[0:2],
 lemmatizer = lemmatization.Lemmatizer(tagger)
 
 
-def prepare_for_w2v(text, keep_stopwords=False, lemmatize=True):
+def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False):
     """Prepare a text for word2vec.
 
     Parameters
     ----------
     text: str
         the whole text as a single string
+
+    lemmatize: bool
+        if True, lemmatize text, otherwise leave it as it is
 
     keep_stopwords: Bool
         keep or remove stopwords

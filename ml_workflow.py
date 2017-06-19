@@ -1,8 +1,9 @@
 """Workflow for the machine learning part with Word2Vec."""
+import glob
+import logging
 import time
-from typing import List
-
 from gensim.models import word2vec
+
 import preprocessing
 
 
@@ -16,99 +17,58 @@ def preprocess_file(path, keep_stopwords=False, lemmatize=True):
     return cleaned_text
 
 
-def train_model(sentences: List[List[str]], num_features=200,
-                min_word_count=5, num_workers=4, context=5,
-                downsampling=1e-3):
-    """Launch the word2vec training on the sentences.
+def get_corpus(train_dir="./train_data"):
+    """Get all the text as a single string."""
+    training_files = glob.glob(train_dir + '/*.txt')
 
-    Parameters
-    ----------
-    sentences: List[List[str]]
-        list of sentences to train the model on
+    corpus = ""
+    for f in training_files:
+        with open(f, 'r') as new_file:
+            corpus = corpus + new_file.read()
 
-    num_features: int
-        length of the word embedding vector for every word
+    return corpus
 
-    min_word_count: int
-        threshold for word frequency: if a word appears less than this
-        calue, it is discarded
 
-    num_workers: int
-        number of threads to use for training
+def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
+                      train_dir="./train_data"):
+    """A convenience function to run all the workflow."""
+    # 1. get the text to analyze
+    corpus = get_corpus(train_dir)
 
-    context: int
-        width of the context taken into account to generate embeddings
+    # 2. set the model parameters
+    features = 200
+    word_count = 5
+    workers = 4
+    context = 5
 
-    downsampling: float
-        downsample value for frequent words (like stopwords)
+    # 3. process the corpus
+    sentences = preprocessing.prepare_for_w2v(corpus, lemmatize,
+                                              keep_stopwords)
 
-    Returns
-    -------
-    model: model
-        trained word2vec model
-    """
+    # 4. start learning
     info = "Started training with {} features, {} minimum word count, ".format(
-        num_features, min_word_count)
-    info2 = "{} threads, {} context window, {} downsampling.".format(
-        num_workers, context, downsampling)
+        features, word_count)
+    info2 = "{} threads, {} context window, default downsampling.".format(
+        workers, context)
     print(info + info2)
-    # logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',
-    #                     level=logging.INFO)
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',
+                        level=logging.INFO)
 
     start_time = time.time()
-    model = word2vec.Word2Vec(sentences, workers=num_workers,
-                              size=num_features, min_count=min_word_count,
-                              window=context, sample=downsampling)
+    model = word2vec.Word2Vec(sentences, size=features, window=context,
+                              min_count=word_count, workers=workers,
+                              sg=1)
 
     end_time = time.time()
     print("Finished training in {:.3f} seconds.".format(end_time - start_time))
-    return model
 
-
-def complete_workflow(save=True, keep_stopwords=False, lemmatize=True):
-    """A convenience function to run all the workflow."""
-    filepath = "train_data/Stephen Chbosky - Ragazzo da parete.txt"
-    sentences = preprocess_file(filepath, keep_stopwords, lemmatize)
-
-    features = 300
-    word_count = 10
-    workers = 4
-    context = 10
-    downsampling = 1e-3
-
-    model = train_model(sentences, num_features=features,
-                        min_word_count=word_count,
-                        num_workers=workers,
-                        context=context,
-                        downsampling=downsampling)
-
+    # 5. save model
     if save:
         save_model(model, features, word_count, context,
                    lemmatize, keep_stopwords)
 
     print("Workflow completed.")
     return model
-
-
-def multiple_training():
-    """Batch training function."""
-    filepath = "train_data/Stephen Chbosky - Ragazzo da parete.txt"
-    keep_stopwords = False
-    lemmatize = True
-    sentences = preprocess_file(filepath, keep_stopwords, lemmatize)
-
-    features = 300
-    word_count = [2, 5, 10]
-    workers = 4
-    context = [3, 5, 10]
-    downsampling = 1e-3
-
-    models = [[train_model(sentences, features, wc,
-                           workers, ctx, downsampling)
-               for wc in word_count]
-              for ctx in context]
-
-    return models, word_count, context
 
 
 def save_model(model, num_features, min_word_count, context, lemmatized,
