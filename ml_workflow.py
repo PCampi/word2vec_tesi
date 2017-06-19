@@ -5,8 +5,6 @@ from typing import List
 from gensim.models import word2vec
 import preprocessing
 
-import logging
-
 
 def preprocess_file(path, keep_stopwords=False, lemmatize=True):
     """Read the contents of a file and prepare it for w2v."""
@@ -18,8 +16,8 @@ def preprocess_file(path, keep_stopwords=False, lemmatize=True):
     return cleaned_text
 
 
-def train_model(sentences: List[List[str]], num_features=300,
-                min_word_count=40, num_workers=4, context=10,
+def train_model(sentences: List[List[str]], num_features=200,
+                min_word_count=5, num_workers=4, context=5,
                 downsampling=1e-3):
     """Launch the word2vec training on the sentences.
 
@@ -102,7 +100,7 @@ def multiple_training():
     features = 300
     word_count = [2, 5, 10]
     workers = 4
-    context = [3, 5]
+    context = [3, 5, 10]
     downsampling = 1e-3
 
     models = [[train_model(sentences, features, wc,

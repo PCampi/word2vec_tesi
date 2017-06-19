@@ -128,7 +128,13 @@ def preprocess(text):
                         guillements_in_sentence(
                             whitespace(
                                 apostrophe(
-                                    square_brackets(text)))))))))
+                                    square_brackets(
+                                        delete_numbers(text))))))))))
+
+
+def delete_numbers(text):
+    """Delete all numbers from a text."""
+    return re.sub(r'\d', '', text)
 
 
 def punctuation(text):
