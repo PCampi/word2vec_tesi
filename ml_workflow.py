@@ -20,20 +20,21 @@ def preprocess_file(path, keep_stopwords=False, lemmatize=True):
 def get_corpus(train_dir="./train_data"):
     """Get all the text as a single string."""
     training_files = glob.glob(train_dir + '/*.txt')
+    book_count = len(training_files)
 
     corpus = ""
     for f in training_files:
         with open(f, 'r') as new_file:
             corpus = corpus + new_file.read()
 
-    return corpus
+    return corpus, book_count
 
 
 def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
                       train_dir="./train_data"):
     """A convenience function to run all the workflow."""
     # 1. get the text to analyze
-    corpus = get_corpus(train_dir)
+    corpus, book_count = get_corpus(train_dir)
 
     # 2. set the model parameters
     features = 200
@@ -42,8 +43,10 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
     context = 5
 
     # 3. process the corpus
+    print("Started lemmatization.")
     sentences = preprocessing.prepare_for_w2v(corpus, lemmatize,
                                               keep_stopwords)
+    print("Finished lemmatization.")
 
     # 4. start learning
     info = "Started training with {} features, {} minimum word count, ".format(
@@ -65,17 +68,17 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
     # 5. save model
     if save:
         save_model(model, features, word_count, context,
-                   lemmatize, keep_stopwords)
+                   lemmatize, book_count, keep_stopwords)
 
     print("Workflow completed.")
     return model
 
 
 def save_model(model, num_features, min_word_count, context, lemmatized,
-               keep_stopwords=False):
+               book_count, keep_stopwords):
     """Save a word2vec model."""
-    model_name = "saved_models/{}feat_{}minwords_{}context"\
-                 .format(num_features, min_word_count, context)
+    model_name = "saved_models/{}feat_{}minwords_{}context_{}books"\
+                 .format(num_features, min_word_count, context, book_count)
 
     if lemmatized:
         model_name = model_name + "_lemmatized"
