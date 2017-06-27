@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """Generic text preprocessing."""
 
 import re
@@ -89,15 +91,25 @@ def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False):
         cleaned_text = list(map(list, gen_no_stopwords))
 
     # 7. return the List[List[str]] of cleaned_text
-    return cleaned_text
+    number_of_sentences = len(cleaned_text)
+    return cleaned_text, number_of_sentences
 
 
 def get_stopwords():
     """Get the set of stopwords."""
     s = set(stopwords.words('italian'))
-    s.add('anch')
-    s.add('pi')
-    s.add('pu')
+    others = {'anch', 'pi', 'pu', 'lì', 'là', 'di', 'a', 'da', 'in', 'con',
+              'su', 'per', 'tra', 'fra', 'perchè', 'Hazel', 'Gus',
+              'enchiladas', 'Isaac', 'Patrick', 'Margo', 'Roth',
+              'Spiegelman', 'Ben', 'Starling', 'Mizuki', 'Sakaki',
+              'Ando', 'Miles', 'Marie', 'Alaska', 'Buck', 'Mulligan',
+              'Stephen', 'Dedalus', 'Raskòlnikov', 'Lizavèta', 'Alena',
+              'Ivànovna', 'Emilio', 'Brentani', 'Angiolina', 'Sorniani',
+              'Merighi', 'Zeno'}
+    for sw in others:
+        s.add(sw)
+        s.add(sw.lower())
+
     return s
 
 
@@ -142,7 +154,7 @@ def delete_numbers(text):
 
 def punctuation(text):
     """Substitute ?,!,;,:...- with ."""
-    return re.sub(r'[?!;:\|\u2026\u2212\u002d\ufe63\uff0d\u2014\(\)]+',
+    return re.sub(r'[?!;:\|\u2026\u2212\u002d\ufe63\uff0d\u2014\u2013\(\)]+',
                   r'.',
                   text)
 

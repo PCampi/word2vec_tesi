@@ -100,3 +100,5 @@ treetagger-mac
 GoogleNews-vectors-negative300.bin.gz
 model_stripped
 model_stripped.syn0.npy
+saved_models
+train_data/corpus
