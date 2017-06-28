@@ -3,12 +3,12 @@
 """Generic text preprocessing."""
 
 import re
-from nltk.corpus import stopwords
 import treetaggerwrapper as ttw
 
 from configuration_manager import ConfigurationManager
 import lemmatization
 import splitting
+import my_stopwords
 
 cmgr = ConfigurationManager("config.json")
 cmgr.load_config()
@@ -23,6 +23,8 @@ splitter = splitting.TextSplitter(language)
 tagger = ttw.TreeTagger(TAGLANG=language.lower()[0:2],
                         TAGDIR=cmgr.get_treetagger_path())
 lemmatizer = lemmatization.Lemmatizer(tagger)
+
+all_stopwords = my_stopwords.my_stopwords
 
 
 def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False):
@@ -97,20 +99,7 @@ def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False):
 
 def get_stopwords():
     """Get the set of stopwords."""
-    s = set(stopwords.words('italian'))
-    others = {'anch', 'pi', 'pu', 'lì', 'là', 'di', 'a', 'da', 'in', 'con',
-              'su', 'per', 'tra', 'fra', 'perchè', 'Hazel', 'Gus',
-              'enchiladas', 'Isaac', 'Patrick', 'Margo', 'Roth',
-              'Spiegelman', 'Ben', 'Starling', 'Mizuki', 'Sakaki',
-              'Ando', 'Miles', 'Marie', 'Alaska', 'Buck', 'Mulligan',
-              'Stephen', 'Dedalus', 'Raskòlnikov', 'Lizavèta', 'Alena',
-              'Ivànovna', 'Emilio', 'Brentani', 'Angiolina', 'Sorniani',
-              'Merighi', 'Zeno'}
-    for sw in others:
-        s.add(sw)
-        s.add(sw.lower())
-
-    return s
+    return all_stopwords
 
 
 def preprocess(text):

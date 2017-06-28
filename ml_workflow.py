@@ -27,7 +27,7 @@ def read_all_corpus(train_dir="./train_data"):
     corpus = ""
     for f in training_files:
         with open(f, 'r') as new_file:
-            corpus = corpus + new_file.read()
+            corpus = corpus + ".\n" + new_file.read()
 
     return corpus, book_count
 
