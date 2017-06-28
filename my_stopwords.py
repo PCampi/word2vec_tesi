@@ -54,7 +54,8 @@ _names = {'Hazel', 'Gus', 'Walden', 'Brahma',
           'Carmichael', 'Paul', 'Rayley', 'Minta', 'Doyle', 'Prue',
           'Andrew', 'Camilla', 'James', 'Lily', 'Briscoe', 'Alchimista',
           'Santiago', 'Melchisedek', 'Andalusia', 'Tarifa', 'piramidi',
-          'Urim', 'Tumim', 'Fatima', 'Piedra'}
+          'Urim', 'Tumim', 'Fatima', 'Piedra', 'Argentieri', 'Bianca',
+          'Beatrice', 'Leo', 'Nicolosi', 'Niko', 'Silvia', 'Terminator'}
 
 _months = _months.union({m.lower() for m in _months})
 _names = _names.union({n.lower() for n in _names})
