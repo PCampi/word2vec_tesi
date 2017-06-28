@@ -27,7 +27,8 @@ lemmatizer = lemmatization.Lemmatizer(tagger)
 all_stopwords = my_stopwords.my_stopwords
 
 
-def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False):
+def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False,
+                    debug=True):
     """Prepare a text for word2vec.
 
     Parameters
@@ -50,11 +51,15 @@ def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False):
     preprocessed_text = preprocess(text)
 
     # 2. split the sentences -> gen(List[List[str]])
+    if debug:
+        print("Splitting sentences...")
     sentences = (splitter.sentence_to_words(s)
                  for s in splitter.text_to_sentences(preprocessed_text))
 
     # 3. lemmatize sentences -> gen(List[List[str]])
     if lemmatize:
+        if debug:
+            print("Start lemmatization...")
         lemmatized = (lemmatizer.lemmatize(s) for s in sentences)
         to_filter_punct = lemmatized
     else:
@@ -70,6 +75,8 @@ def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False):
         def fun(w):
             return w not in punct and len(w) > 1
 
+    if debug:
+        print("Filtering not words...")
     only_words = (filter(fun, s) for s in to_filter_punct)
 
     # 5. remove apostrophes and dots from remaining words
@@ -79,20 +86,28 @@ def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False):
         """Delete dots and apostrophes from a str."""
         return punctuation_to_space(apostrophe_no_space(word))
 
+    if debug:
+        print("Stripping apostrophes and dots...")
     cleaned_words = ((strip_dot_apostrophe(w) for w in s)
                      for s in only_words)
 
     # 6. convert to list
     # gen(gen(List[str])) -> List[List[str]]
+    if debug:
+        print("Cleaning text...")
     if keep_stopwords:
         cleaned_text = list(map(list, cleaned_words))
     else:
         stopwords = get_stopwords()
         gen_no_stopwords = (filter((lambda w: w not in stopwords), s)
                             for s in cleaned_words)
+        if debug:
+            print("Deleting stopwords...")
         cleaned_text = list(map(list, gen_no_stopwords))
 
     # 7. return the List[List[str]] of cleaned_text
+    if debug:
+        print("Finished!")
     number_of_sentences = len(cleaned_text)
     return cleaned_text, number_of_sentences
 
