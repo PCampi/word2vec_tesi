@@ -146,9 +146,10 @@ def preprocess(text):
                     quotations_in_sentence(
                         guillements_in_sentence(
                             whitespace(
-                                apostrophe(
-                                    square_brackets(
-                                        delete_numbers(text))))))))))
+                                end_of_sentence(
+                                    apostrophe(
+                                        square_brackets(
+                                            delete_numbers(text)))))))))))
 
 
 def delete_numbers(text):
@@ -177,7 +178,7 @@ def ellipsis(text):
 
 def rebalance_full_stops(text):
     """Substitute non consecutive full stops with one only."""
-    return re.sub(r'([.]\s+[.])', r' . ', text)
+    return re.sub(r'\.(\s*\.*)*', r'. ', text)
 
 
 def square_brackets(text):
@@ -213,3 +214,8 @@ def guillements_in_sentence(text):
 def quotations_in_sentence(text):
     """Substitute all opening-closing quotation marks with a space."""
     return re.sub(r'[\u0022]([^\u0022]+)[\u0022]', r' \1 ', text)
+
+
+def end_of_sentence(text):
+    """Put a space after each fullstop."""
+    return re.sub(r'\.', r'. ', text)
