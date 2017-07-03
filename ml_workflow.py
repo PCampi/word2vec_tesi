@@ -62,7 +62,8 @@ def save_preprocessed_corpus(corpus: List[List[str]]):
 
 def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
                       train_dir="./train_data", use_cache=False,
-                      cached_corpus_name=None):
+                      cached_corpus_name=None,
+                      context=5):
     """A convenience function to run all the workflow.
 
     Parameters
@@ -94,7 +95,7 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
     features = 200
     word_count = 5
     workers = 4
-    context = 5
+    # context = 5
     # if not using cached corpus
     # 1. get the text to analyze
     book_count = None
