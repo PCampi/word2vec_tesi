@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """Generic text preprocessing."""
 
 import re
