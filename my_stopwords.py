@@ -5,7 +5,8 @@ from nltk.corpus import stopwords
 
 
 _prepositions = {'anch', 'pi', 'pu', 'lì', 'là', 'di', 'a', 'da', 'in', 'con',
-                 'selfu', 'per', 'tra', 'fra', 'perchè'}
+                 'selfu', 'per', 'tra', 'fra', 'perchè', 'perché', 'sì', 'no',
+                 'ma', 'però', 'tuttavia'}
 _months = {'Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
            'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre',
            'Dicembre'}
@@ -55,7 +56,8 @@ _names = {'Hazel', 'Gus', 'Walden', 'Brahma',
           'Andrew', 'Camilla', 'James', 'Lily', 'Briscoe', 'Alchimista',
           'Santiago', 'Melchisedek', 'Andalusia', 'Tarifa', 'piramidi',
           'Urim', 'Tumim', 'Fatima', 'Piedra', 'Argentieri', 'Bianca',
-          'Beatrice', 'Leo', 'Nicolosi', 'Niko', 'Silvia', 'Terminator'}
+          'Beatrice', 'Leo', 'Nicolosi', 'Niko', 'Silvia', 'Terminator',
+          'Edmumd', 'Grant', 'signore', 'signora'}
 
 _months = _months.union({m.lower() for m in _months})
 _names = _names.union({n.lower() for n in _names})

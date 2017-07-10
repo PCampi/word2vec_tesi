@@ -40,13 +40,14 @@ def create_cached_corpus(directory="./train_data"):
     start_time = time.time()
     print("Start lemmatization")
 
-    sentences = preprocessing.prepare_for_w2v(corpus, lemmatize=True,
-                                              keep_stopwords=False)
+    sents, sent_number = preprocessing.prepare_for_w2v(corpus,
+                                                       lemmatize=True,
+                                                       keep_stopwords=False)
     end_time = time.time()
     elapsed = end_time - start_time
     print("Finished lemmatization in {}".format(elapsed))
 
-    return sentences
+    return sents, sent_number
 
 
 def save_preprocessed_corpus(corpus: List[List[str]]):
@@ -63,7 +64,8 @@ def save_preprocessed_corpus(corpus: List[List[str]]):
 def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
                       train_dir="./train_data", use_cache=False,
                       cached_corpus_name=None,
-                      context=5):
+                      context=5, features=200, word_count=5, workers=4,
+                      use_hierarchical_softmax=True, use_cheap_version=False):
     """A convenience function to run all the workflow.
 
     Parameters
@@ -86,16 +88,31 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
     cached_corpus_name: str
         name of the corpus file to use
 
+    context: Int
+        dimension of the window context for training
+
+    features: Int
+        dimension of the feature array
+
+    word_count: Int
+        threshold to discard very infrequent words: if f(word) < word_count,
+        it will be discarded
+
+    workers: Int
+        number of worker threads
+
+    use_hierarchical_softmax: boolean
+        flag to use hierarchical softmax (True) or negative sampling (False)
+
+    use_cheap_version: boolean
+        flag to activate the less memory-hungry version of text preprocessing,
+        at the cost of speed
+
     Returns
     -------
     model: gensim.model.word2vec
         the trained model
     """
-    # 0. set the model parameters
-    features = 200
-    word_count = 5
-    workers = 4
-    # context = 5
     # if not using cached corpus
     # 1. get the text to analyze
     book_count = None
@@ -104,8 +121,12 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
         corpus, book_count = read_all_corpus(train_dir)
         # 2. process the corpus
         print("Started lemmatization.")
-        sentences = preprocessing.prepare_for_w2v(corpus, lemmatize,
-                                                  keep_stopwords)
+        if use_cheap_version:
+            sentences = preprocessing.prepare_for_w2v(corpus, lemmatize,
+                                                      keep_stopwords)
+        else:
+            sentences = preprocessing.prepare_for_w2v_list(corpus, lemmatize,
+                                                           keep_stopwords)
         print("Finished lemmatization.")
     else:
         corpus_path = train_dir + '/corpus/' + cached_corpus_name
@@ -125,7 +146,7 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
     start_time = time.time()
     model = word2vec.Word2Vec(sentences, size=features, window=context,
                               min_count=word_count, workers=workers,
-                              sg=1)
+                              sg=1, hs=int(use_hierarchical_softmax))
 
     end_time = time.time()
     print("Finished training in {:.3f} seconds.".format(end_time - start_time))
@@ -136,17 +157,19 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
             book_count = len(glob.glob(train_dir + '/*.txt'))
 
         save_model(model, features, word_count, context,
-                   lemmatize, book_count, keep_stopwords)
+                   use_hierarchical_softmax, lemmatize,
+                   book_count, keep_stopwords)
 
     print("Workflow completed.")
     return model
 
 
-def save_model(model, num_features, min_word_count, context, lemmatized,
-               book_count, keep_stopwords):
+def save_model(model, num_features, min_word_count, context, use_hs,
+               lemmatized, book_count, keep_stopwords):
     """Save a word2vec model."""
-    model_name = "saved_models/{}feat_{}minwords_{}context_{}books"\
-                 .format(num_features, min_word_count, context, book_count)
+    model_name = "saved_models/{}feat_{}minwords_{}context_{}hs_books"\
+                 .format(num_features, min_word_count, context,
+                         bool(use_hs), book_count)
 
     if lemmatized:
         model_name = model_name + "_lemmatized"
