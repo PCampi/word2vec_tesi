@@ -167,9 +167,9 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
 def save_model(model, num_features, min_word_count, context, use_hs,
                lemmatized, book_count, keep_stopwords):
     """Save a word2vec model."""
-    model_name = "saved_models/{}feat_{}minwords_{}context_{}hs_books"\
+    model_name = "saved_models/{}feat_{}minwords_{}context_{}hs_{}books"\
                  .format(num_features, min_word_count, context,
-                         bool(use_hs), book_count)
+                         int(use_hs), book_count)
 
     if lemmatized:
         model_name = model_name + "_lemmatized"
