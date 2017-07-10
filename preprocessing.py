@@ -40,6 +40,9 @@ def prepare_for_w2v(text, lemmatize=True, keep_stopwords=False,
     keep_stopwords: Bool
         keep or remove stopwords
 
+    debug: bool
+        activate debugging output
+
     Returns
     -------
     cleaned_text: str
