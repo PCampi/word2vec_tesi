@@ -65,7 +65,8 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
                       train_dir="./train_data", use_cache=False,
                       cached_corpus_name=None,
                       context=5, features=200, word_count=5, workers=4,
-                      use_hierarchical_softmax=True, use_cheap_version=False):
+                      use_hierarchical_softmax=True, use_cheap_version=False,
+                      downsampling=1e-2):
     """A convenience function to run all the workflow.
 
     Parameters
@@ -122,16 +123,17 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
         # 2. process the corpus
         print("Started lemmatization.")
         if use_cheap_version:
-            sentences = preprocessing.prepare_for_w2v(corpus, lemmatize,
-                                                      keep_stopwords)
-        else:
-            sentences = preprocessing.prepare_for_w2v_list(corpus, lemmatize,
+            sents, n_sents = preprocessing.prepare_for_w2v(corpus, lemmatize,
                                                            keep_stopwords)
+        else:
+            sents, n_sents = preprocessing.prepare_for_w2v_list(corpus,
+                                                                lemmatize,
+                                                                keep_stopwords)
         print("Finished lemmatization.")
     else:
         corpus_path = train_dir + '/corpus/' + cached_corpus_name
         with open(corpus_path, 'rb') as c:
-            sentences = pickle.load(c)
+            sents = pickle.load(c)
 
     # 3. start learning
     info = "Started training with {} features, {} minimum word count, ".format(
@@ -144,9 +146,10 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
                         level=logging.INFO)
 
     start_time = time.time()
-    model = word2vec.Word2Vec(sentences, size=features, window=context,
+    model = word2vec.Word2Vec(sents, size=features, window=context,
                               min_count=word_count, workers=workers,
-                              sg=1, hs=int(use_hierarchical_softmax))
+                              sg=1, hs=int(use_hierarchical_softmax),
+                              sample=downsampling)
 
     end_time = time.time()
     print("Finished training in {:.3f} seconds.".format(end_time - start_time))
@@ -162,6 +165,78 @@ def complete_workflow(save=True, keep_stopwords=False, lemmatize=True,
 
     print("Workflow completed.")
     return model
+
+
+def train_multiple_models(sentences, feat_size, hsm):
+    """Train multiple models on the same sentences.
+
+    Parameters
+    ----------
+    sentences: List[List[str]]
+        the sentences to train the models on
+
+    feat_size: List[int]
+        word vectors sizes
+
+    hsm: List[bool]
+        flag to use hierarchical softmax or negative sampling
+
+    Returns
+    -------
+    models: List[List[gensim.models.word2vec]]
+        list of list of models; feature size changes on the rows,
+        hierarchical softmax on the columns
+    """
+    models = []
+    for fs in feat_size:
+        tmp = []
+        for h in hsm:
+            m = complete_workflow(save=True,
+                                  use_cache=True,
+                                  cached_corpus_name='corpus_626124.pickle',
+                                  features=fs,
+                                  use_hierarchical_softmax=h)
+            tmp.append(m)
+
+        models.append(tmp)
+
+    return models
+
+
+def collect_words(models, count=25, min_corr=0.0):
+    """Create the list of words to enhance EmoLex.
+
+    Parameters
+    ----------
+    models: List[List[gensim.models.word2vec]]
+        list of models trained with different parameters
+
+    count: int
+        how many similar words to ask from the models for each emotion
+
+    min_corr: float [0.0, 1.0]
+        minimum similarity score for words to be accepted as similar
+
+    Returns
+    -------
+    to_add: dictionary(emotions: words_to_add)
+        dictionary containing the words to add for each emotion in EmoLex
+    """
+    emotions = ['rabbia', 'anticipazione', 'disgusto', 'paura',
+                'gioia', 'tristezza', 'sorpresa', 'fiducia']
+    to_add = dict()
+    for e in emotions:
+        s = set()
+        for row in models:
+            for m in row:
+                most_sim = m.most_similar(positive=[e],
+                                          topn=count)
+                for word, score in most_sim:
+                    if score > min_corr:
+                        s.add(word)
+        to_add[e] = s.copy()
+
+    return to_add
 
 
 def save_model(model, num_features, min_word_count, context, use_hs,
