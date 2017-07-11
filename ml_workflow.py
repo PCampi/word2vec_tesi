@@ -32,7 +32,8 @@ def read_all_corpus(train_dir="./train_data"):
     return corpus, book_count
 
 
-def create_cached_corpus(directory="./train_data"):
+def create_cached_corpus(directory="./train_data",
+                         use_cheap_version=True):
     """Pre-lemmatize all the corpus."""
     corpus, _ = read_all_corpus(directory)
 
@@ -40,14 +41,19 @@ def create_cached_corpus(directory="./train_data"):
     start_time = time.time()
     print("Start lemmatization")
 
-    sents, sent_number = preprocessing.prepare_for_w2v(corpus,
+    if use_cheap_version:
+        sents, sn = preprocessing.prepare_for_w2v(corpus,
+                                                  lemmatize=True,
+                                                  keep_stopwords=False)
+    else:
+        sents, sn = preprocessing.prepare_for_w2v_list(corpus,
                                                        lemmatize=True,
                                                        keep_stopwords=False)
     end_time = time.time()
     elapsed = end_time - start_time
     print("Finished lemmatization in {}".format(elapsed))
 
-    return sents, sent_number
+    return sents, sn
 
 
 def save_preprocessed_corpus(corpus: List[List[str]]):
@@ -193,7 +199,7 @@ def train_multiple_models(sentences, feat_size, hsm):
         for h in hsm:
             m = complete_workflow(save=True,
                                   use_cache=True,
-                                  cached_corpus_name='corpus_626124.pickle',
+                                  cached_corpus_name='corpus_626023.pickle',
                                   features=fs,
                                   use_hierarchical_softmax=h)
             tmp.append(m)
@@ -232,7 +238,7 @@ def collect_words(models, count=25, min_corr=0.0):
                 most_sim = m.most_similar(positive=[e],
                                           topn=count)
                 for word, score in most_sim:
-                    if score > min_corr:
+                    if score >= min_corr:
                         s.add(word)
         to_add[e] = s.copy()
 
